@@ -1,38 +1,38 @@
-use std::collections::HashMap;
+use std::time::Instant;
 
 fn main() -> Result<(), core::num::ParseIntError> {
     let input = "12,1,16,3,11,0";
     let numbers: Vec<u32> = input.split(',').map(str::parse).collect::<Result<_, _>>()?;
 
-    println!("Part 1: {}.", part1(&numbers, 2020));
-    println!("Part 2: {}.", part1(&numbers, 30000000));
+    let p1 = Instant::now();
+    println!("Part 1: {} ({:?}).", part1(&numbers, 2020), p1.elapsed());
+    let p2 = Instant::now();
+    println!(
+        "Part 2: {} ({:?}).",
+        part1(&numbers, 30_000_000),
+        p2.elapsed()
+    );
     Ok(())
 }
 
 fn part1(numbers: &[u32], turns: u32) -> u32 {
-    let mut spoken: HashMap<u32, Vec<u32>> = HashMap::new();
+    let mut spoken = vec![None; turns as usize];
 
     for (turn, n) in numbers.iter().enumerate() {
-        spoken.insert(*n, vec![turn as u32 + 1]);
+        spoken[*n as usize] = Some(turn as u32 + 1);
     }
 
     let mut last = numbers[numbers.len() - 1];
 
-    for turn in numbers.len() as u32 + 1..=turns {
-        if let Some(spoken_turns) = spoken.get(&last) {
-            let len = spoken_turns.len();
-
-            if len == 1 {
-                last = 0;
-            } else {
-                last = spoken_turns[len - 1] - spoken_turns[len - 2];
-            }
-
-            spoken.entry(last).or_insert(Vec::new()).push(turn);
-        }
+    for turn in numbers.len() as u32..turns {
+        let new_last = match spoken[last as usize] {
+            None => 0,
+            Some(prev_turn) => turn - prev_turn,
+        };
+        spoken[last as usize] = Some(turn);
+        last = new_last
     }
 
-    println!("{:?}", spoken);
     last
 }
 
